@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Mail } from 'lucide-react';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -9,7 +10,7 @@ const Register = () => {
   const [role, setRole] = useState<'client' | 'freelancer'>('client');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,18 +20,47 @@ const Register = () => {
       return setError('Passwords do not match');
     }
 
+    if (password.length < 6) {
+      return setError('Password must be at least 6 characters long');
+    }
+
     try {
       setError('');
       setLoading(true);
       await signUp(email, password, role);
-      
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Failed to create an account');
+      setSuccess(true);
+    } catch (err: any) {
+      setError(
+        err.message === 'User already registered'
+          ? 'An account with this email already exists'
+          : 'Failed to create an account. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="max-w-md mx-auto mt-8">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <div className="flex justify-center mb-4">
+            <Mail className="h-12 w-12 text-indigo-600" />
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Check Your Email</h2>
+          <p className="text-gray-600 mb-6">
+            We've sent a verification link to <strong>{email}</strong>. Please check your email and click the link to complete your registration.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Return to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto mt-8">
@@ -66,7 +96,9 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
+              minLength={6}
             />
+            <p className="mt-1 text-sm text-gray-500">Must be at least 6 characters long</p>
           </div>
           <div className="mb-4">
             <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2">
